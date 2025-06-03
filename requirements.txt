@@ -2,3 +2,4 @@ flask
 matplotlib
 numpy
 gunicorn
+flask-cors
