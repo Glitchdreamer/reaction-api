@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")  # Use non-GUI backend for servers
@@ -7,6 +8,7 @@ import io
 import base64
 
 app = Flask(__name__)
+CORS(app) 
 
 @app.route('/')
 def home():
