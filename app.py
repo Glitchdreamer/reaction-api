@@ -28,7 +28,7 @@ def simulate():
         breakup = data.get('breakup', False)
         mc = data.get('mc', 0) * 931.5
         md = data.get('md', 0) * 931.5
-        Q_break = Ex_b + (mb−mc−md)
+        Q_break = Ex_b + (mb - mc - md)
         Q = ((ma + mX) - (mb + mY)) - Ex_b - Ex_Y
         n = 1000
         pa = np.sqrt(2 * ma * Ta)
