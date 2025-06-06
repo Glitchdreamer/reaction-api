@@ -29,6 +29,9 @@ def simulate():
         mX = X.mass * 931.5
         mb = b.mass * 931.5
         mY = Y.mass * 931.5
+
+        ub=b.A
+        uY=Y.A
         
         Ex_b  = data['Ex_b']
         Ex_Y  = data['Ex_Y']
@@ -193,8 +196,8 @@ def simulate():
 
         # Plot
         plt.figure()
-        plt.plot(np.array(theta_b_deg_arr),np.array(Tb_arr)/b.A,'o',markersize=3,label='b')
-        plt.plot(np.array(theta_Y_deg_arr),np.array(TY_arr)/Y.A,'o',markersize=3,label='Y')
+        plt.plot(np.array(theta_b_deg_arr),np.array(Tb_arr)/ub,'o',markersize=3,label=f'{b.symbol} (b)')
+        plt.plot(np.array(theta_Y_deg_arr),np.array(TY_arr)/uY,'o',markersize=3,label=f'{Y.symbol} (Y)')
         plt.ylabel("Energy[Lab-MeV/u]")
         plt.xlabel("Angle[Lab-deg]")
         plt.legend()
