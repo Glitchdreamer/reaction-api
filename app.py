@@ -29,7 +29,7 @@ def simulate():
         md = data.get('md', 0) * 931.5
         Q_break = data.get('Q_break', 0)
 
-        n = 10000
+        n = 1000
         pa = np.sqrt(2 * ma * Ta)
         gamma = np.sqrt(((ma * mb) / (mX * mY)) * (Ta / (Ta + Q * (1 + ma / mX))))
         gamma_ = np.sqrt(((ma * mY) / (mX * mb)) * (Ta / (Ta + Q * (1 + ma / mX))))
@@ -38,58 +38,125 @@ def simulate():
         Tb_arr, TY_arr, theta_b_deg_arr, theta_Y_deg_arr = [], [], [], []
 
         for _ in range(n):
-            theta_b_cm = np.random.uniform(0, np.pi)
-            phi_b_cm = np.random.uniform(0, 2 * np.pi)
-            theta_Y_cm = np.pi - theta_b_cm
-            phi_Y_cm = (phi_b_cm + np.pi) % (2 * np.pi)
+            theta_b_cm=np.random.uniform(0,np.pi)
+            phi_b_cm=np.random.uniform(0,2*np.pi)
 
-            theta_b = np.arctan2(np.sin(theta_b_cm), np.cos(theta_b_cm) + gamma)
-            theta_Y = np.arctan2(np.sin(theta_Y_cm), np.cos(theta_Y_cm) + gamma_)
+            theta_Y_cm=np.pi-theta_b_cm
+            phi_Y_cm=phi_b_cm+np.pi
+            if phi_Y_cm > 2*np.pi:
+                phi_Y_cm -= 2*np.pi
 
-            if theta_b < 0: theta_b += np.pi
-            if theta_Y < 0: theta_Y += np.pi
+            theta_b=np.arctan2(np.sin(theta_b_cm),(np.cos(theta_b_cm)+gamma))
+            if theta_b < 0:
+                theta_b += np.pi
+            theta_Y=np.arctan2(np.sin(theta_Y_cm),(np.cos(theta_Y_cm)+gamma_))
+            if theta_Y < 0:
+                theta_Y += np.pi
+    
+            theta_b_cm_deg=theta_b_cm*180/np.pi
+            theta_b_deg=theta_b*180/np.pi
+            phi_b=phi_b_cm
+            phi_Y=phi_Y_cm
+            Tb_1=((np.sqrt(ma*mb*Ta)*np.cos(theta_b)+np.sqrt(ma*mb*Ta*(np.cos(theta_b))**2+(mY+mb)*(mY*Q+mY*Ta-ma*Ta)))/(mY+mb))**2
+            Tb_2=((np.sqrt(ma*mb*Ta)*np.cos(theta_b)-np.sqrt(ma*mb*Ta*(np.cos(theta_b))**2+(mY+mb)*(mY*Q+mY*Ta-ma*Ta)))/(mY+mb))**2
+            pb_1 = np.sqrt(2 * mb * Tb_1)
+            pb_2 = np.sqrt(2 * mb * Tb_2)
+    
+            pb_1_z=pb_1*np.cos(theta_b)
+            pb_1_x=pb_1*np.sin(theta_b)*np.cos(phi_b)
+            pb_1_y=pb_1*np.sin(theta_b)*np.sin(phi_b)
 
-            Tb_1 = ((np.sqrt(ma*mb*Ta)*np.cos(theta_b) + np.sqrt(ma*mb*Ta*(np.cos(theta_b))**2 + (mY+mb)*(mY*Q+mY*Ta-ma*Ta))) / (mY+mb))**2
-            Tb_2 = ((np.sqrt(ma*mb*Ta)*np.cos(theta_b) - np.sqrt(ma*mb*Ta*(np.cos(theta_b))**2 + (mY+mb)*(mY*Q+mY*Ta-ma*Ta))) / (mY+mb))**2
+            pb_2_z=pb_2*np.cos(theta_b)
+            pb_2_x=pb_2*np.sin(theta_b)*np.cos(phi_b)
+            pb_2_y=pb_2*np.sin(theta_b)*np.sin(phi_b)
 
-            Tb = Tb_1 if np.random.rand() < 0.5 else Tb_2
-            pb = np.sqrt(2 * mb * Tb)
-            vb = pb / mb
+            pY_1_z=pa-pb_1_z
+            pY_1_x=-pb_1_x
+            pY_1_y=-pb_1_y
 
-            theta_b_deg = np.degrees(theta_b)
-            theta_Y_deg = np.degrees(theta_Y)
-            TY = ((pa - pb * np.cos(theta_b)) ** 2 + (pb * np.sin(theta_b)) ** 2) / (2 * mY)
+            pY_2_z=pa-pb_2_z
+            pY_2_x=-pb_2_x
+            pY_2_y=-pb_2_y
 
+            theta_Y1=np.arctan2(np.sqrt(pY_1_x*pY_1_x+pY_1_y*pY_1_y),pY_1_z)
+            if theta_Y1 < 0:
+                theta_Y1 += np.pi
+                
+            theta_Y2=np.arctan2(np.sqrt(pY_2_x*pY_2_x+pY_2_y*pY_2_y),pY_2_z)
+            if theta_Y2 < 0:
+                theta_Y2 += np.pi
+            
+            pY_1=np.sqrt(pY_1_z*pY_1_z+pY_1_x*pY_1_x+pY_1_y*pY_1_y)
+            pY_2=np.sqrt(pY_2_z*pY_2_z+pY_2_x*pY_2_x+pY_2_y*pY_2_y)
+
+            TY_1=(pY_1*pY_1)/(2*mY)
+            TY_2=(pY_2*pY_2)/(2*mY)
+            
+            
+            theta_b_deg_arr.append(theta_b_deg)
+            
+
+            theta_Y_cm_deg=theta_Y_cm*180/np.pi
+            theta_Y_deg=theta_Y*180/np.pi
+
+            if abs(theta_Y-theta_Y1) < abs(theta_Y-theta_Y2):
+                Tb = Tb_1
+                TY = TY_1
+            else:
+                Tb = Tb_2
+                TY = TY_2
+            vb=np.sqrt(2*(Tb)/mb)
+            vb_z=vb*np.cos(theta_b)
+            vb_x=vb*np.sin(theta_b)*np.cos(phi_b)
+            vb_y=vb*np.sin(theta_b)*np.sin(phi_b)
             Tc = Td = E_rel = theta_c = theta_d = None
 
             if breakup:
-                vd_rest = np.sqrt((2 * Q_break) / (md * (1 + md / mc)))
-                vc_rest = vd_rest * (md / mc)
-                theta_d_rest = np.random.uniform(0, np.pi)
-                phi_d_rest = np.random.uniform(0, 2*np.pi)
-                theta_c_rest = np.pi - theta_d_rest
-                phi_c_rest = (phi_d_rest + np.pi) % (2*np.pi)
+                vd_rest=np.sqrt((2*Q_break)/(md*(1+md/mc)))
+                vc_rest=vd_rest*(md/mc)
+                theta_d_rest=np.random.uniform(0,np.pi)
+                phi_d_rest=np.random.uniform(0,2*np.pi)
 
-                vb_z = vb * np.cos(theta_b)
-                vb_x = vb * np.sin(theta_b) * np.cos(phi_b_cm)
-                vb_y = vb * np.sin(theta_b) * np.sin(phi_b_cm)
+                theta_c_rest=np.pi-theta_d_rest
+                phi_c_rest=phi_d_rest+np.pi
+                if phi_c_rest > 2*np.pi:
+                    phi_c_rest -= 2*np.pi
 
-                vd_z = vb_z + vd_rest * np.cos(theta_d_rest)
-                vd_x = vb_x + vd_rest * np.sin(theta_d_rest) * np.cos(phi_d_rest)
-                vd_y = vb_y + vd_rest * np.sin(theta_d_rest) * np.sin(phi_d_rest)
 
-                vc_z = vb_z + vc_rest * np.cos(theta_c_rest)
-                vc_x = vb_x + vc_rest * np.sin(theta_c_rest) * np.cos(phi_c_rest)
-                vc_y = vb_y + vc_rest * np.sin(theta_c_rest) * np.sin(phi_c_rest)
+                vd_rest_z=vd_rest*np.cos(theta_d_rest)
+                vd_rest_x=vd_rest*np.sin(theta_d_rest)*np.cos(phi_d_rest)
+                vd_rest_y=vd_rest*np.sin(theta_d_rest)*np.sin(phi_d_rest)
 
-                vc_mag = np.sqrt(vc_x**2 + vc_y**2 + vc_z**2)
-                vd_mag = np.sqrt(vd_x**2 + vd_y**2 + vd_z**2)
-                Tc = 0.5 * mc * vc_mag**2
-                Td = 0.5 * md * vd_mag**2
-                theta_c = np.arctan2(np.sqrt(vc_x**2 + vc_y**2), vc_z)
-                theta_d = np.arctan2(np.sqrt(vd_x**2 + vd_y**2), vd_z)
-                phi_c = np.arctan2(vc_y, vc_x)
-                phi_d = np.arctan2(vd_y, vd_x)
+                vc_rest_z=vc_rest*np.cos(theta_c_rest)
+                vc_rest_x=vc_rest*np.sin(theta_c_rest)*np.cos(phi_c_rest)
+                vc_rest_y=vc_rest*np.sin(theta_c_rest)*np.sin(phi_c_rest)
+
+                vd_z=vb_z+vd_rest_z
+                vd_y=vb_y+vd_rest_y
+                vd_x=vb_x+vd_rest_x
+
+                vc_z=vb_z+vc_rest_z
+                vc_y=vb_y+vc_rest_y
+                vc_x=vb_x+vc_rest_x
+
+                vc=np.sqrt(vc_x*vc_x+vc_y*vc_y+vc_z*vc_z)
+                vd=np.sqrt(vd_x*vd_x+vd_y*vd_y+vd_z*vd_z)
+
+                phi_c=np.arctan2(vc_y,vc_x)
+                if phi_c < 0:
+                    phi_c += 2*np.pi
+                theta_c=np.arctan2(np.sqrt(vc_x*vc_x+vc_y*vc_y),vc_z)
+                if theta_c < 0:
+                    theta_c += np.pi
+
+                phi_d=np.arctan2(vd_y,vd_x)
+                if phi_d < 0:
+                    phi_d += 2*np.pi
+                theta_d=np.arctan2(np.sqrt(vd_x*vd_x+vd_y*vd_y),vd_z)
+                if theta_d < 0:
+                    theta_d += np.pi
+                Tc=0.5*mc*vc*vc
+                Td=0.5*md*vd*vd
 
                 theta_rel = np.arccos(
                     np.cos(theta_c) * np.cos(theta_d) +
