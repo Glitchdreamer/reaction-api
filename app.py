@@ -93,8 +93,6 @@ def simulate():
             TY_2=(pY_2*pY_2)/(2*mY)
             
             
-            theta_b_deg_arr.append(theta_b_deg)
-            
 
             theta_Y_cm_deg=theta_Y_cm*180/np.pi
             theta_Y_deg=theta_Y*180/np.pi
