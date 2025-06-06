@@ -1,18 +1,18 @@
+# === app.py ===
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import numpy as np
 import matplotlib
-matplotlib.use("Agg")  # Use non-GUI backend for servers
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import io
-import base64
+import io, base64, csv
 
 app = Flask(__name__)
-CORS(app) 
+CORS(app)
 
 @app.route('/')
 def home():
-    return "Nuclear Reaction Simulation API is running!"
+    return "Three-body simulation API is running!"
 
 @app.route('/simulate', methods=['POST'])
 def simulate():
@@ -24,94 +24,113 @@ def simulate():
         mY = data['mY'] * 931.5
         Q  = data['Q']
         Ta = data['Ta']
+        breakup = data.get('breakup', False)
+        mc = data.get('mc', 0) * 931.5
+        md = data.get('md', 0) * 931.5
+        Q_break = data.get('Q_break', 0)
 
-        a = ma / 931.5
-        X = mX / 931.5
-        b = mb / 931.5
-        Y = mY / 931.5
+        n = 10000
         pa = np.sqrt(2 * ma * Ta)
-
-        Tb_arr = []
-        TY_arr = []
-        theta_b_deg_arr = []
-        theta_Y_deg_arr = []
-
         gamma = np.sqrt(((ma * mb) / (mX * mY)) * (Ta / (Ta + Q * (1 + ma / mX))))
         gamma_ = np.sqrt(((ma * mY) / (mX * mb)) * (Ta / (Ta + Q * (1 + ma / mX))))
 
-        for _ in range(1000):
+        rows = [['theta_b_deg', 'Tb', 'theta_Y_deg', 'TY', 'theta_c', 'Tc', 'theta_d', 'Td', 'E_rel']]
+        Tb_arr, TY_arr, theta_b_deg_arr, theta_Y_deg_arr = [], [], [], []
+
+        for _ in range(n):
             theta_b_cm = np.random.uniform(0, np.pi)
             phi_b_cm = np.random.uniform(0, 2 * np.pi)
-
             theta_Y_cm = np.pi - theta_b_cm
             phi_Y_cm = (phi_b_cm + np.pi) % (2 * np.pi)
 
-            theta_b = np.arctan2(np.sin(theta_b_cm), (np.cos(theta_b_cm) + gamma))
-            theta_b = theta_b + np.pi if theta_b < 0 else theta_b
-            theta_Y = np.arctan2(np.sin(theta_Y_cm), (np.cos(theta_Y_cm) + gamma_))
-            theta_Y = theta_Y + np.pi if theta_Y < 0 else theta_Y
+            theta_b = np.arctan2(np.sin(theta_b_cm), np.cos(theta_b_cm) + gamma)
+            theta_Y = np.arctan2(np.sin(theta_Y_cm), np.cos(theta_Y_cm) + gamma_)
 
-            Tb_1 = ((np.sqrt(ma * mb * Ta) * np.cos(theta_b) + 
-                    np.sqrt(ma * mb * Ta * (np.cos(theta_b))**2 + 
-                            (mY + mb) * (mY * Q + mY * Ta - ma * Ta))) / (mY + mb)) ** 2
-            Tb_2 = ((np.sqrt(ma * mb * Ta) * np.cos(theta_b) - 
-                    np.sqrt(ma * mb * Ta * (np.cos(theta_b))**2 + 
-                            (mY + mb) * (mY * Q + mY * Ta - ma * Ta))) / (mY + mb)) ** 2
+            if theta_b < 0: theta_b += np.pi
+            if theta_Y < 0: theta_Y += np.pi
 
-            pb_1 = np.sqrt(2 * mb * Tb_1)
-            pb_2 = np.sqrt(2 * mb * Tb_2)
+            Tb_1 = ((np.sqrt(ma*mb*Ta)*np.cos(theta_b) + np.sqrt(ma*mb*Ta*(np.cos(theta_b))**2 + (mY+mb)*(mY*Q+mY*Ta-ma*Ta))) / (mY+mb))**2
+            Tb_2 = ((np.sqrt(ma*mb*Ta)*np.cos(theta_b) - np.sqrt(ma*mb*Ta*(np.cos(theta_b))**2 + (mY+mb)*(mY*Q+mY*Ta-ma*Ta))) / (mY+mb))**2
 
-            phi_b = phi_b_cm
+            Tb = Tb_1 if np.random.rand() < 0.5 else Tb_2
+            pb = np.sqrt(2 * mb * Tb)
+            vb = pb / mb
 
-            pb_1_vec = np.array([
-                pb_1 * np.sin(theta_b) * np.cos(phi_b),
-                pb_1 * np.sin(theta_b) * np.sin(phi_b),
-                pb_1 * np.cos(theta_b)
-            ])
-            pb_2_vec = np.array([
-                pb_2 * np.sin(theta_b) * np.cos(phi_b),
-                pb_2 * np.sin(theta_b) * np.sin(phi_b),
-                pb_2 * np.cos(theta_b)
-            ])
+            theta_b_deg = np.degrees(theta_b)
+            theta_Y_deg = np.degrees(theta_Y)
+            TY = ((pa - pb * np.cos(theta_b)) ** 2 + (pb * np.sin(theta_b)) ** 2) / (2 * mY)
 
-            pa_vec = np.array([0, 0, pa])
-            pY_1_vec = pa_vec - pb_1_vec
-            pY_2_vec = pa_vec - pb_2_vec
+            Tc = Td = E_rel = theta_c = theta_d = None
 
-            theta_Y1 = np.arctan2(np.linalg.norm(pY_1_vec[:2]), pY_1_vec[2])
-            theta_Y2 = np.arctan2(np.linalg.norm(pY_2_vec[:2]), pY_2_vec[2])
+            if breakup:
+                vd_rest = np.sqrt((2 * Q_break) / (md * (1 + md / mc)))
+                vc_rest = vd_rest * (md / mc)
+                theta_d_rest = np.random.uniform(0, np.pi)
+                phi_d_rest = np.random.uniform(0, 2*np.pi)
+                theta_c_rest = np.pi - theta_d_rest
+                phi_c_rest = (phi_d_rest + np.pi) % (2*np.pi)
 
-            pY_1_mag = np.linalg.norm(pY_1_vec)
-            pY_2_mag = np.linalg.norm(pY_2_vec)
+                vb_z = vb * np.cos(theta_b)
+                vb_x = vb * np.sin(theta_b) * np.cos(phi_b_cm)
+                vb_y = vb * np.sin(theta_b) * np.sin(phi_b_cm)
 
-            TY_1 = (pY_1_mag ** 2) / (2 * mY)
-            TY_2 = (pY_2_mag ** 2) / (2 * mY)
+                vd_z = vb_z + vd_rest * np.cos(theta_d_rest)
+                vd_x = vb_x + vd_rest * np.sin(theta_d_rest) * np.cos(phi_d_rest)
+                vd_y = vb_y + vd_rest * np.sin(theta_d_rest) * np.sin(phi_d_rest)
 
-            Tb = Tb_1 if abs(theta_Y - theta_Y1) < abs(theta_Y - theta_Y2) else Tb_2
-            TY = TY_1 if abs(theta_Y - theta_Y1) < abs(theta_Y - theta_Y2) else TY_2
+                vc_z = vb_z + vc_rest * np.cos(theta_c_rest)
+                vc_x = vb_x + vc_rest * np.sin(theta_c_rest) * np.cos(phi_c_rest)
+                vc_y = vb_y + vc_rest * np.sin(theta_c_rest) * np.sin(phi_c_rest)
 
-            theta_b_deg_arr.append(np.degrees(theta_b))
-            theta_Y_deg_arr.append(np.degrees(theta_Y))
+                vc_mag = np.sqrt(vc_x**2 + vc_y**2 + vc_z**2)
+                vd_mag = np.sqrt(vd_x**2 + vd_y**2 + vd_z**2)
+                Tc = 0.5 * mc * vc_mag**2
+                Td = 0.5 * md * vd_mag**2
+                theta_c = np.arctan2(np.sqrt(vc_x**2 + vc_y**2), vc_z)
+                theta_d = np.arctan2(np.sqrt(vd_x**2 + vd_y**2), vd_z)
+                phi_c = np.arctan2(vc_y, vc_x)
+                phi_d = np.arctan2(vd_y, vd_x)
+
+                theta_rel = np.arccos(
+                    np.cos(theta_c) * np.cos(theta_d) +
+                    np.sin(theta_c) * np.sin(theta_d) * np.cos(phi_c - phi_d)
+                )
+                E_rel = (md*Tc + mc*Td - 2*np.sqrt(mc*Tc*md*Td)*np.cos(theta_rel)) / (mc + md)
+
             Tb_arr.append(Tb / mb)
             TY_arr.append(TY / mY)
+            theta_b_deg_arr.append(theta_b_deg)
+            theta_Y_deg_arr.append(theta_Y_deg)
 
-        # Plotting
+            rows.append([
+                theta_b_deg, Tb / mb, theta_Y_deg, TY / mY,
+                np.degrees(theta_c) if breakup else '',
+                Tc / mc if breakup else '',
+                np.degrees(theta_d) if breakup else '',
+                Td / md if breakup else '',
+                E_rel if breakup else ''
+            ])
+
+        # Plot
         plt.figure()
-        plt.plot(theta_b_deg_arr, Tb_arr, 'o', markersize=3, label='b')
-        plt.plot(theta_Y_deg_arr, TY_arr, 'o', markersize=3, label='Y')
-        plt.ylabel("Energy [Lab-MeV/u]")
-        plt.xlabel("Angle [Lab-deg]")
+        plt.plot(theta_b_deg_arr, Tb_arr, '.', markersize=1, label='b')
+        plt.plot(theta_Y_deg_arr, TY_arr, '.', markersize=1, label='Y')
+        plt.xlabel('Angle [deg]')
+        plt.ylabel('Energy [MeV/u]')
+        plt.title('Kinematic Plot')
         plt.legend()
-        plt.title("Kinematic Plot")
         plt.grid(True)
-
         buf = io.BytesIO()
         plt.savefig(buf, format='png')
         buf.seek(0)
-        img_str = base64.b64encode(buf.read()).decode("utf-8")
-        plt.close()
+        img_base64 = base64.b64encode(buf.read()).decode('utf-8')
 
-        return jsonify({"image": img_str})
+        csv_buf = io.StringIO()
+        writer = csv.writer(csv_buf)
+        writer.writerows(rows)
+        csv_base64 = base64.b64encode(csv_buf.getvalue().encode()).decode('utf-8')
+
+        return jsonify({"image": img_base64, "csv": csv_base64})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
