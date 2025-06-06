@@ -36,7 +36,7 @@ def simulate():
         breakup = data.get('breakup', False)
         if breakup:
             c=Nucleus(data['c'])
-            d=Nucleus(data['c'])
+            d=Nucleus(data['d'])
             mc = c.mass * 931.5  # Convert to MeV
             md = d.mass * 931.5
         else:
@@ -193,8 +193,8 @@ def simulate():
 
         # Plot
         plt.figure()
-        plt.plot(np.array(theta_b_deg_arr),np.array(Tb_arr)/8,'o',markersize=3,label='b')
-        plt.plot(np.array(theta_Y_deg_arr),np.array(TY_arr)/11,'o',markersize=3,label='Y')
+        plt.plot(np.array(theta_b_deg_arr),np.array(Tb_arr)/b.A,'o',markersize=3,label='b')
+        plt.plot(np.array(theta_Y_deg_arr),np.array(TY_arr)/Y.A,'o',markersize=3,label='Y')
         plt.ylabel("Energy[Lab-MeV/u]")
         plt.xlabel("Angle[Lab-deg]")
         plt.legend()
