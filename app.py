@@ -162,27 +162,26 @@ def simulate():
                 )
                 E_rel = (md*Tc + mc*Td - 2*np.sqrt(mc*Tc*md*Td)*np.cos(theta_rel)) / (mc + md)
 
-            Tb_arr.append(Tb / mb)
-            TY_arr.append(TY / mY)
+            Tb_arr.append(Tb )
+            TY_arr.append(TY )
             theta_b_deg_arr.append(theta_b_deg)
             theta_Y_deg_arr.append(theta_Y_deg)
 
             rows.append([
-                theta_b_deg, Tb / mb, theta_Y_deg, TY / mY,
+                theta_b_deg, Tb, theta_Y_deg, TY,
                 np.degrees(theta_c) if breakup else '',
-                Tc / mc if breakup else '',
+                Tc if breakup else '',
                 np.degrees(theta_d) if breakup else '',
-                Td / md if breakup else '',
+                Td if breakup else '',
                 E_rel if breakup else ''
             ])
 
         # Plot
         plt.figure()
-        plt.plot(theta_b_deg_arr, Tb_arr, '.', markersize=1, label='b')
-        plt.plot(theta_Y_deg_arr, TY_arr, '.', markersize=1, label='Y')
-        plt.xlabel('Angle [deg]')
-        plt.ylabel('Energy [MeV/u]')
-        plt.title('Kinematic Plot')
+        plt.plot(np.array(theta_b_deg_arr),np.array(Tb_arr)/8,'o',markersize=3,label='b')
+        plt.plot(np.array(theta_Y_deg_arr),np.array(TY_arr)/11,'o',markersize=3,label='Y')
+        plt.ylabel("Energy[Lab-MeV/u]")
+        plt.xlabel("Angle[Lab-deg]")
         plt.legend()
         plt.grid(True)
         buf = io.BytesIO()
