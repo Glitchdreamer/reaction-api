@@ -22,13 +22,14 @@ def simulate():
         mX = data['mX'] * 931.5
         mb = data['mb'] * 931.5
         mY = data['mY'] * 931.5
-        Q  = data['Q']
+        Ex_b  = data['Ex_b']
+        Ex_Y  = data['Ex_Y']
         Ta = data['Ta']
         breakup = data.get('breakup', False)
         mc = data.get('mc', 0) * 931.5
         md = data.get('md', 0) * 931.5
-        Q_break = data.get('Q_break', 0)
-
+        Q_break = Ex_b + (mb−mc−md)
+        Q = ((ma + mX) - (mb + mY)) - Ex_b - Ex_Y
         n = 1000
         pa = np.sqrt(2 * ma * Ta)
         gamma = np.sqrt(((ma * mb) / (mX * mY)) * (Ta / (Ta + Q * (1 + ma / mX))))
