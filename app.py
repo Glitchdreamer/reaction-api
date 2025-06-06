@@ -18,16 +18,29 @@ def home():
 def simulate():
     try:
         data = request.json
-        ma = data['ma'] * 931.5
-        mX = data['mX'] * 931.5
-        mb = data['mb'] * 931.5
-        mY = data['mY'] * 931.5
+
+        a = Nucleus(data['a'])
+        X = Nucleus(data['X'])
+        b = Nucleus(data['b'])
+        Y = Nucleus(data['Y'])
+        
+        ma = a.mass * 931.5  # Convert from u to MeV
+        mX = X.mass * 931.5
+        mb = b.mass * 931.5
+        mY = Y.mass * 931.5
+        
         Ex_b  = data['Ex_b']
         Ex_Y  = data['Ex_Y']
         Ta = data['Ta']
         breakup = data.get('breakup', False)
-        mc = data.get('mc', 0) * 931.5
-        md = data.get('md', 0) * 931.5
+        if breakup:
+            c=Nucleus(data['c'])
+            d=Nucleus(data['c'])
+            mc = c.mass * 931.5  # Convert to MeV
+            md = d.mass * 931.5
+        else:
+            mc = 0
+            md = 0
         Q_break = Ex_b + (mb - mc - md)
         Q = ((ma + mX) - (mb + mY)) - Ex_b - Ex_Y
         n = 1000
