@@ -254,23 +254,18 @@ def convert_angle():
             theta_lab_b = np.arctan2(np.sin(theta_cm_b), np.cos(theta_cm_b) + gamma)
 
         elif angle_type == 'theta_cm_b':
-            theta_cm_b = angle_value * np.pi/180
+            theta_cm_b = angle_value
             theta_lab_b=np.arctan2(np.sin(theta_cm_b),(np.cos(theta_cm_b)+gamma))
             if theta_lab_b < 0:
                 theta_lab_b += np.pi
-            
-            
             theta_cm_Y = np.pi - theta_cm_b
             theta_lab_Y=np.arctan2(np.sin(theta_cm_Y),(np.cos(theta_cm_Y)+gamma_))
             if theta_lab_Y < 0:
                 theta_lab_Y += np.pi
-            theta_lab_Y=theta_lab_Y*180/np.pi
-            theta_cm_Y=theta_cm_Y*180/np.pi
-            theta_cm_b=theta_cm_b*180/np.pi
-            theta_lab_b=theta_lab_b*180/np.pi
+            
 
         elif angle_type == 'theta_cm_Y':
-            theta_cm_Y = angle_value * np.pi/180
+            theta_cm_Y = angle_value 
             theta_lab_Y = np.arctan2(np.sin(theta_cm_Y),(np.cos(theta_cm_Y)+gamma_))
             if theta_lab_Y < 0:
                 theta_lab_Y += np.pi
@@ -278,10 +273,7 @@ def convert_angle():
             theta_lab_b = np.arctan2(np.sin(theta_cm_b),(np.cos(theta_cm_b)+gamma))
             if theta_lab_b < 0:
                 theta_lab_b += np.pi
-            theta_lab_Y=theta_lab_Y*180/np.pi
-            theta_cm_Y=theta_cm_Y*180/np.pi
-            theta_cm_b=theta_cm_b*180/np.pi
-            theta_lab_b=theta_lab_b*180/np.pi
+            
 
         return jsonify({
             "theta_lab_b": np.degrees(theta_lab_b),
