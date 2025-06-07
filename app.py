@@ -196,32 +196,24 @@ def simulate():
             ])
 
         # Plot
-       # plt.figure()
-       # plt.plot(np.array(theta_b_deg_arr),np.array(Tb_arr)/b.A,'o',markersize=3,label='b')
-       # plt.plot(np.array(theta_Y_deg_arr),np.array(TY_arr)/Y.A,'o',markersize=3,label='Y')
-       # plt.ylabel("Energy[Lab-MeV/u]")
-       # plt.xlabel("Angle[Lab-deg]")
-       # plt.legend()
-       # plt.grid(True)
-       # buf = io.BytesIO()
-       # plt.savefig(buf, format='png')
-       # buf.seek(0)
-       # img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+        plt.figure()
+        plt.plot(np.array(theta_b_deg_arr),np.array(Tb_arr)/b.A,'o',markersize=3,label='b')
+        plt.plot(np.array(theta_Y_deg_arr),np.array(TY_arr)/Y.A,'o',markersize=3,label='Y')
+        plt.ylabel("Energy[Lab-MeV/u]")
+        plt.xlabel("Angle[Lab-deg]")
+        plt.legend()
+        plt.grid(True)
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png')
+        buf.seek(0)
+        img_base64 = base64.b64encode(buf.read()).decode('utf-8')
 
         csv_buf = io.StringIO()
         writer = csv.writer(csv_buf)
         writer.writerows(rows)
         csv_base64 = base64.b64encode(csv_buf.getvalue().encode()).decode('utf-8')
 
-        return jsonify({
-    "theta_b_deg": theta_b_deg_arr,
-    "Tb": (np.array(Tb_arr) / b.A).tolist(),
-    "theta_Y_deg": theta_Y_deg_arr,
-    "TY": (np.array(TY_arr) / Y.A).tolist(),
-    "csv": csv_base64,
-    "Q": Q, "Ecm": Ecm, "vcb": vcb
-})
-
+        return jsonify({"image": img_base64, "csv": csv_base64,"Q": Q, "Ecm": Ecm, "vcb": vcb,})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
