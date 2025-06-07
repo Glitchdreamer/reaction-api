@@ -247,7 +247,7 @@ def convert_angle():
             def equation(theta_cm_b):
                 return np.tan(theta_lab_b) - (np.sin(theta_cm_b) / (np.cos(theta_cm_b) + gamma))
             initial_guess = theta_lab_b
-            theta_cm_b = fsolve(equation, initial_guess)
+            theta_cm_b = fsolve(equation, initial_guess)[0]
             theta_cm_Y = np.pi - theta_cm_b
             theta_lab_Y=np.arctan2(np.sin(theta_cm_Y),(np.cos(theta_cm_Y)+gamma_))
             if theta_lab_Y < 0:
@@ -258,7 +258,7 @@ def convert_angle():
             def equation1(theta_cm_Y):
                 return np.tan(theta_lab_Y) - (np.sin(theta_cm_Y) / (np.cos(theta_cm_Y) + gamma_))
             initial_guess1 = theta_lab_Y
-            theta_cm_Y = fsolve(equation, initial_guess1)
+            theta_cm_Y = fsolve(equation, initial_guess1)[0]
             theta_cm_b = np.pi - theta_cm_Y
             theta_lab_b=np.arctan2(np.sin(theta_cm_b),(np.cos(theta_cm_b)+gamma))
             if theta_lab_b < 0:
