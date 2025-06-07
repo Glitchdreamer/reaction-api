@@ -2,6 +2,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import numpy as np
+from scipy.optimize import fsolve
 from pynucastro import Nucleus
 import matplotlib
 matplotlib.use("Agg")
@@ -243,15 +244,25 @@ def convert_angle():
 
         if angle_type == 'theta_lab_b':
             theta_lab_b = angle_value
-            theta_cm_b = np.arctan2(np.sin(theta_lab_b), np.cos(theta_lab_b) - gamma)
+            def equation(theta_cm_b):
+                return np.tan(theta_lab_b) - (np.sin(theta_cm_b) / (np.cos(theta_cm_b) + gamma))
+            initial_guess = theta_lab_b
+            theta_cm_b = fsolve(equation, initial_guess)
             theta_cm_Y = np.pi - theta_cm_b
-            theta_lab_Y = np.arctan2(np.sin(theta_cm_Y), np.cos(theta_cm_Y) + gamma_)
+            theta_lab_Y=np.arctan2(np.sin(theta_cm_Y),(np.cos(theta_cm_Y)+gamma_))
+            if theta_lab_Y < 0:
+                theta_lab_Y += np.pi
 
         elif angle_type == 'theta_lab_Y':
             theta_lab_Y = angle_value
-            theta_cm_Y = np.arctan2(np.sin(theta_lab_Y), np.cos(theta_lab_Y) - gamma_)
+            def equation1(theta_cm_Y):
+                return np.tan(theta_lab_Y) - (np.sin(theta_cm_Y) / (np.cos(theta_cm_Y) + gamma_))
+            initial_guess1 = theta_lab_Y
+            theta_cm_Y = fsolve(equation, initial_guess1)
             theta_cm_b = np.pi - theta_cm_Y
-            theta_lab_b = np.arctan2(np.sin(theta_cm_b), np.cos(theta_cm_b) + gamma)
+            theta_lab_b=np.arctan2(np.sin(theta_cm_b),(np.cos(theta_cm_b)+gamma))
+            if theta_lab_b < 0:
+                theta_lab_b += np.pi
 
         elif angle_type == 'theta_cm_b':
             theta_cm_b = angle_value
