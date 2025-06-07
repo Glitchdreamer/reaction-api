@@ -45,6 +45,8 @@ def simulate():
             md = 0
         Q_break = Ex_b + (mb - mc - md)
         Q = ((ma + mX) - (mb + mY)) - Ex_b - Ex_Y
+        Ecm = mX / (ma + mX) * Ta
+        vcb = (1.44 * a.Z * X.Z) / (1.2 * ((a.A)**(1/3) + (X.A)**(1/3)))
         n = 1000
         pa = np.sqrt(2 * ma * Ta)
         gamma = np.sqrt(((ma * mb) / (mX * mY)) * (Ta / (Ta + Q * (1 + ma / mX))))
@@ -210,7 +212,7 @@ def simulate():
         writer.writerows(rows)
         csv_base64 = base64.b64encode(csv_buf.getvalue().encode()).decode('utf-8')
 
-        return jsonify({"image": img_base64, "csv": csv_base64})
+        return jsonify({"image": img_base64, "csv": csv_base64,"Q": Q, "Ecm": Ecm, "vcb": vcb,})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
