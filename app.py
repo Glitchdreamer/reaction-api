@@ -25,13 +25,11 @@ def simulate():
         b = Nucleus(data['b'])
         Y = Nucleus(data['Y'])
         
-        ma = a.mass * 931.5  # Convert from u to MeV
-        mX = X.mass * 931.5
-        mb = b.mass * 931.5
-        mY = Y.mass * 931.5
+        ma = a.mass   
+        mX = X.mass 
+        mb = b.mass 
+        mY = Y.mass 
 
-        ub=b.A
-        uY=Y.A
         
         Ex_b  = data['Ex_b']
         Ex_Y  = data['Ex_Y']
@@ -40,8 +38,8 @@ def simulate():
         if breakup:
             c=Nucleus(data['c'])
             d=Nucleus(data['d'])
-            mc = c.mass * 931.5  # Convert to MeV
-            md = d.mass * 931.5
+            mc = c.mass   # Convert to MeV
+            md = d.mass 
         else:
             mc = 0
             md = 0
@@ -196,8 +194,8 @@ def simulate():
 
         # Plot
         plt.figure()
-        plt.plot(np.array(theta_b_deg_arr),np.array(Tb_arr)/8,'o',markersize=3,label='b')
-        plt.plot(np.array(theta_Y_deg_arr),np.array(TY_arr)/11,'o',markersize=3,label='Y')
+        plt.plot(np.array(theta_b_deg_arr),np.array(Tb_arr)/b.A,'o',markersize=3,label='b')
+        plt.plot(np.array(theta_Y_deg_arr),np.array(TY_arr)/Y.A,'o',markersize=3,label='Y')
         plt.ylabel("Energy[Lab-MeV/u]")
         plt.xlabel("Angle[Lab-deg]")
         plt.legend()
