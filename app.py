@@ -216,3 +216,64 @@ def simulate():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/convert-angle', methods=['POST'])
+def convert_angle():
+    try:
+        data = request.json
+        a = Nucleus(data['a'])
+        X = Nucleus(data['X'])
+        b = Nucleus(data['b'])
+        Y = Nucleus(data['Y'])
+        Ta = float(data['Ta'])
+        Ex_b = float(data['Ex_b'])
+        Ex_Y = float(data['Ex_Y'])
+
+        ma = a.mass 
+        mX = X.mass 
+        mb = b.mass 
+        mY = Y.mass 
+
+        Q = ((ma + mX) - (mb + mY)) - Ex_b - Ex_Y
+        gamma = np.sqrt(((ma * mb) / (mX * mY)) * (Ta / (Ta + Q * (1 + ma / mX))))
+        gamma_ = np.sqrt(((ma * mY) / (mX * mb)) * (Ta / (Ta + Q * (1 + ma / mX))))
+
+        angle_type = data['angleType']
+        angle_value = np.radians(float(data['angleValue']))
+
+        if angle_type == 'theta_lab_b':
+            theta_lab_b = angle_value
+            theta_cm_b = np.arctan2(np.sin(theta_lab_b), np.cos(theta_lab_b) - gamma)
+            theta_cm_Y = np.pi - theta_cm_b
+            theta_lab_Y = np.arctan2(np.sin(theta_cm_Y), np.cos(theta_cm_Y) + gamma_)
+
+        elif angle_type == 'theta_lab_Y':
+            theta_lab_Y = angle_value
+            theta_cm_Y = np.arctan2(np.sin(theta_lab_Y), np.cos(theta_lab_Y) - gamma_)
+            theta_cm_b = np.pi - theta_cm_Y
+            theta_lab_b = np.arctan2(np.sin(theta_cm_b), np.cos(theta_cm_b) + gamma)
+
+        elif angle_type == 'theta_cm_b':
+            theta_cm_b = angle_value
+            theta_lab_b = np.arctan2(np.sin(theta_cm_b), np.cos(theta_cm_b) + gamma)
+            theta_cm_Y = np.pi - theta_cm_b
+            theta_lab_Y = np.arctan2(np.sin(theta_cm_Y), np.cos(theta_cm_Y) + gamma_)
+
+        elif angle_type == 'theta_cm_Y':
+            theta_cm_Y = angle_value
+            theta_lab_Y = np.arctan2(np.sin(theta_cm_Y), np.cos(theta_cm_Y) + gamma_)
+            theta_cm_b = np.pi - theta_cm_Y
+            theta_lab_b = np.arctan2(np.sin(theta_cm_b), np.cos(theta_cm_b) + gamma)
+
+        return jsonify({
+            "theta_lab_b": np.degrees(theta_lab_b),
+            "theta_lab_Y": np.degrees(theta_lab_Y),
+            "theta_cm_b": np.degrees(theta_cm_b),
+            "theta_cm_Y": np.degrees(theta_cm_Y)
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
